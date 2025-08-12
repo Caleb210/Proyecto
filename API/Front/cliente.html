@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Clientes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <ul class="nav nav-tabs" id="navId" role="tablist">
+                <li class="nav-item">
+                    <a href="#tab1Id" class="nav-link active" data-bs-toggle="tab">Clientes</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button">Módulos</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="usuario.html">Usuarios</a>
+                        <a class="dropdown-item" href="empleado.html">Empleados</a>
+                        <a class="dropdown-item" href="#">Categorias Menu</a>
+                        <a class="dropdown-item" href="#">Platillos</a>
+                        <a class="dropdown-item" href="#">Ingredientes</a>
+                        <a class="dropdown-item" href="pedido.html">Pedidos</a>
+                        <a class="dropdown-item" href="detalles_pedido.html">Detalles Pedidos</a>
+                        <a class="dropdown-item" href="mesas.html">Mesas</a>
+                        <a class="dropdown-item" href="reserva.html">Reservas</a>
+                        <a class="dropdown-item" href="proveedor.html">Proveedores</a>
+                        <a class="dropdown-item" href="venta.html">Ventas</a>
+                    </div>
+                </li>
+            </ul>
+        </header>
+
+        <h1>Clientes</h1>
+
+        <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre</label>
+            <input type="text" class="form-control" id="nombre" />
+        </div>
+        <div class="mb-3">
+            <label for="telefono" class="form-label">Telefono</label>
+            <input type="text" class="form-control" id="telefono" />
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" />
+        </div>
+        <div class="mb-3">
+            <label for="puntos_fidelidad" class="form-label">Puntos De Fidelidad</label>
+            <input type="number" class="form-control" id="puntos_fidelidad" />
+        </div>
+        <div class="mb-3">
+            <label for="ultima_visita" class="form-label">Ultima Visita</label>
+            <input type="date" class="form-control" id="ultima_visita" />
+        </div>
+
+        <div class="mb-3">
+            <a id="guardardatos" class="btn btn-primary" role="button">Guardar</a>
+            <a id="actualizardatos" class="btn btn-success" style="display: none;" role="button">Actualizar</a>
+            <input onclick="limpiarFormulario()" class="btn btn-danger" type="button" value="Limpiar" />
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Telefono</th>
+                        <th>Email</th>
+                        <th>Puntos De Fidelidad</th>
+                        <th>Ultima Visita</th>
+                    </tr>
+                </thead>
+                <tbody id="listadatos"></tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        const API_URL = 'http://localhost:3000/api/clientes'; // Cambia la ruta si es diferente
+        let clienteEditandoId = null;
+
+        // Al cargar la página
+        $(document).ready(() => {
+            obtenerClientes();
+
+            $('#guardardatos').click(() => {
+                const datos = obtenerDatosFormulario();
+                if (!datos) return;
+
+                $.post(API_URL, datos)
+                    .done(() => {
+                        limpiarFormulario();
+                        obtenerClientes();
+                    })
+                    .fail(err => console.error(err));
+            });
+
+            $('#actualizardatos').click(() => {
+                const datos = obtenerDatosFormulario();
+                if (!datos) return;
+
+                $.ajax({
+                    url: `${API_URL}/${clienteEditandoId}`,
+                    method: 'PUT',
+                    data: datos
+                })
+                    .done(() => {
+                        limpiarFormulario();
+                        obtenerClientes();
+                        $('#guardardatos').show();
+                        $('#actualizardatos').hide();
+                        clienteEditandoId = null;
+                    })
+                    .fail(err => console.error(err));
+            });
+        });
+
+        // Obtener todos los clientes
+        function obtenerClientes() {
+            $.get(API_URL, (clientes) => {
+                let filas = '';
+                clientes.forEach(cliente => {
+                    filas += `
+                <tr>
+                    <td>${cliente.nombre}</td>
+                    <td>${cliente.telefono}</td>
+                    <td>${cliente.email}</td>
+                    <td>${cliente.puntos_fidelidad}</td>
+                    <td>${cliente.ultima_visita ? cliente.ultima_visita.substring(0, 10) : ''}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="editarCliente('${cliente._id}')">Editar</button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarCliente('${cliente._id}')">Eliminar</button>
+                    </td>
+                </tr>
+            `;
+                });
+                $('#listadatos').html(filas);
+            });
+        }
+
+        // Editar cliente
+        function editarCliente(id) {
+            $.get(`${API_URL}/${id}`, (cliente) => {
+                $('#nombre').val(cliente.nombre);
+                $('#telefono').val(cliente.telefono);
+                $('#email').val(cliente.email);
+                $('#puntos_fidelidad').val(cliente.puntos_fidelidad);
+                $('#ultima_visita').val(cliente.ultima_visita ? cliente.ultima_visita.substring(0, 10) : '');
+                clienteEditandoId = id;
+                $('#guardardatos').hide();
+                $('#actualizardatos').show();
+            });
+        }
+
+        // Eliminar cliente
+        function eliminarCliente(id) {
+            if (!confirm('¿Estás seguro de eliminar este cliente?')) return;
+
+            $.ajax({
+                url: `${API_URL}/${id}`,
+                method: 'DELETE'
+            })
+                .done(() => obtenerClientes())
+                .fail(err => console.error(err));
+        }
+
+        // Obtener datos del formulario
+        function obtenerDatosFormulario() {
+            const nombre = $('#nombre').val().trim();
+            const telefono = $('#telefono').val().trim();
+            const email = $('#email').val().trim();
+            const puntos_fidelidad = $('#puntos_fidelidad').val();
+            const ultima_visita = $('#ultima_visita').val();
+
+            if (!nombre || !telefono || !email || puntos_fidelidad === '' || !ultima_visita) {
+                alert('Todos los campos son obligatorios');
+                return null;
+            }
+
+            return { nombre, telefono, email, puntos_fidelidad, ultima_visita };
+        }
+
+        // Limpiar formulario
+        function limpiarFormulario() {
+            $('#nombre').val('');
+            $('#telefono').val('');
+            $('#email').val('');
+            $('#puntos_fidelidad').val('');
+            $('#ultima_visita').val('');
+            $('#guardardatos').show();
+            $('#actualizardatos').hide();
+            clienteEditandoId = null;
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"></script>
+</body>
+
+</html>

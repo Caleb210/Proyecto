@@ -1,0 +1,44 @@
+body {
+    background-color: #fceee9;
+    font-family: 'Segoe UI', sans-serif;
+    color: #3a3a3a;
+}
+
+h1 {
+    color: #6f1d1b;
+    font-weight: bold;
+    margin-top: 1rem;
+}
+
+.btn-primary {
+    background-color: #6f1d1b;
+    border-color: #6f1d1b;
+}
+
+.btn-primary:hover {
+    background-color: #8c2f2a;
+    border-color: #8c2f2a;
+}
+
+.table thead {
+    background-color: #6f1d1b;
+    color: #fff;
+}
+
+.table tbody tr:hover {
+    background-color: #f8d8d0;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #6f1d1b;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #6f1d1b;
+    color: #fff;
+}
+
+.nav-tabs .nav-link {
+    color: #6f1d1b;
+}

@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Ingredientes</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <ul class="nav nav-tabs">
+        <li class="nav-item">
+          <a href="#" class="nav-link active">Ingredientes</a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#">Módulos</a>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" href="usuario.html">Usuarios</a>
+            <a class="dropdown-item" href="empleado.html">Empleados</a>
+            <a class="dropdown-item" href="cliente.html">Clientes</a>
+            <a class="dropdown-item" href="categoriasmenu.html">Categorías Menú</a>
+            <a class="dropdown-item" href="platillos.html">Platillos</a>
+            <a class="dropdown-item" href="pedido.html">Pedidos</a>
+            <a class="dropdown-item" href="detalles_pedido.html">Detalles Pedidos</a>
+            <a class="dropdown-item" href="mesas.html">Mesas</a>
+            <a class="dropdown-item" href="reserva.html">Reservas</a>
+            <a class="dropdown-item" href="proveedor.html">Proveedores</a>
+            <a class="dropdown-item" href="venta.html">Ventas</a>
+          </div>
+        </li>
+      </ul>
+    </header>
+
+    <h1>Ingredientes</h1>
+
+    <div class="mb-3">
+      <label for="nombre" class="form-label">Nombre</label>
+      <input type="text" class="form-control" id="nombre">
+    </div>
+    <div class="mb-3">
+      <label for="cantidad" class="form-label">Cantidad en Stock</label>
+      <input type="number" class="form-control" id="cantidad">
+    </div>
+    <div class="mb-3">
+      <label for="proveedor" class="form-label">Proveedor</label>
+      <input type="text" class="form-control" id="proveedor">
+    </div>
+    <div class="mb-3">
+      <label for="vencimiento" class="form-label">Fecha de Vencimiento</label>
+      <input type="date" class="form-control" id="vencimiento">
+    </div>
+
+    <div class="mb-3">
+      <button id="guardar" class="btn btn-primary">Guardar</button>
+      <button id="actualizar" class="btn btn-success" style="display:none">Actualizar</button>
+      <button id="limpiar" class="btn btn-danger">Limpiar</button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Cantidad</th>
+            <th>Proveedor</th>
+            <th>Vencimiento</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="lista"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:3000/api/ingredientes';
+    let ingredienteId = null;
+
+    $(document).ready(() => {
+      cargarIngredientes();
+
+      $('#guardar').click(guardarIngrediente);
+      $('#actualizar').click(actualizarIngrediente);
+      $('#limpiar').click(limpiarFormulario);
+    });
+
+    function cargarIngredientes() {
+      $.get(API_URL, (data) => {
+        $('#lista').empty();
+        data.forEach(ingrediente => {
+          const fecha = ingrediente.fecha_vencimiento ? new Date(ingrediente.fecha_vencimiento).toLocaleDateString() : '';
+          $('#lista').append(`
+            <tr>
+              <td>${ingrediente.nombre}</td>
+              <td>${ingrediente.cantidad_stock}</td>
+              <td>${ingrediente.proveedor || ''}</td>
+              <td>${fecha}</td>
+              <td>
+                <button class="btn btn-warning btn-sm" onclick="editarIngrediente('${ingrediente._id}')">Editar</button>
+                <button class="btn btn-danger btn-sm" onclick="eliminarIngrediente('${ingrediente._id}')">Eliminar</button>
+              </td>
+            </tr>
+          `);
+        });
+      });
+    }
+
+    function guardarIngrediente() {
+      const datos = {
+        nombre: $('#nombre').val(),
+        cantidad_stock: $('#cantidad').val(),
+        proveedor: $('#proveedor').val(),
+        fecha_vencimiento: $('#vencimiento').val()
+      };
+
+      $.post(API_URL, datos)
+        .done(() => {
+          limpiarFormulario();
+          cargarIngredientes();
+        })
+        .fail(err => console.error(err));
+    }
+
+    function actualizarIngrediente() {
+      const datos = {
+        nombre: $('#nombre').val(),
+        cantidad_stock: $('#cantidad').val(),
+        proveedor: $('#proveedor').val(),
+        fecha_vencimiento: $('#vencimiento').val()
+      };
+
+      $.ajax({
+        url: `${API_URL}/${ingredienteId}`,
+        method: 'PUT',
+        data: datos
+      })
+      .done(() => {
+        limpiarFormulario();
+        cargarIngredientes();
+      })
+      .fail(err => console.error(err));
+    }
+
+    function editarIngrediente(id) {
+      $.get(`${API_URL}/${id}`, (ingrediente) => {
+        $('#nombre').val(ingrediente.nombre);
+        $('#cantidad').val(ingrediente.cantidad_stock);
+        $('#proveedor').val(ingrediente.proveedor);
+        
+        const fecha = ingrediente.fecha_vencimiento ? 
+          new Date(ingrediente.fecha_vencimiento).toISOString().split('T')[0] : '';
+        $('#vencimiento').val(fecha);
+        
+        ingredienteId = id;
+        $('#guardar').hide();
+        $('#actualizar').show();
+      });
+    }
+
+    function eliminarIngrediente(id) {
+      if (confirm('¿Eliminar este ingrediente?')) {
+        $.ajax({
+          url: `${API_URL}/${id}`,
+          method: 'DELETE'
+        })
+        .done(() => cargarIngredientes())
+        .fail(err => console.error(err));
+      }
+    }
+
+    function limpiarFormulario() {
+      $('#nombre').val('');
+      $('#cantidad').val('');
+      $('#proveedor').val('');
+      $('#vencimiento').val('');
+      ingredienteId = null;
+      $('#guardar').show();
+      $('#actualizar').hide();
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
