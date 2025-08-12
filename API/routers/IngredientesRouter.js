@@ -12,12 +12,21 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const ingrediente = new Ingrediente(req.body);
   try {
+    // Convertir fecha si existe
+    if (req.body.fecha_vencimiento) {
+      req.body.fecha_vencimiento = new Date(req.body.fecha_vencimiento);
+    }
+    
+    const ingrediente = new Ingrediente(req.body);
     const nuevoIngrediente = await ingrediente.save();
     res.status(201).json(nuevoIngrediente);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error('Error en POST /ingredientes:', err);
+    res.status(400).json({ 
+      message: err.message,
+      errors: err.errors 
+    });
   }
 });
 

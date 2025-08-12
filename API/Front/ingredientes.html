@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="es">
+
 <head>
   <meta charset="utf-8" />
   <title>Ingredientes</title>
@@ -77,8 +78,7 @@
   </div>
 
   <script>
-    const API_URL = 'http://localhost:3000/api/ingredientes';
-    let ingredienteId = null;
+    const API_URL = 'http://localhost:3000/api/ingredientes/'; // Agregar barra al final
 
     $(document).ready(() => {
       cargarIngredientes();
@@ -94,19 +94,19 @@
         data.forEach(ingrediente => {
           const fecha = ingrediente.fecha_vencimiento ? new Date(ingrediente.fecha_vencimiento).toLocaleDateString() : '';
           $('#lista').append(`
-            <tr>
-              <td>${ingrediente.nombre}</td>
-              <td>${ingrediente.cantidad_stock}</td>
-              <td>${ingrediente.proveedor || ''}</td>
-              <td>${fecha}</td>
-              <td>
-                <button class="btn btn-warning btn-sm" onclick="editarIngrediente('${ingrediente._id}')">Editar</button>
-                <button class="btn btn-danger btn-sm" onclick="eliminarIngrediente('${ingrediente._id}')">Eliminar</button>
-              </td>
-            </tr>
-          `);
+        <tr>
+          <td>${ingrediente.nombre}</td>
+          <td>${ingrediente.cantidad_stock}</td>
+          <td>${ingrediente.proveedor || ''}</td>
+          <td>${fecha}</td>
+          <td>
+            <button class="btn btn-warning btn-sm" onclick="editarIngrediente('${ingrediente._id}')">Editar</button>
+            <button class="btn btn-danger btn-sm" onclick="eliminarIngrediente('${ingrediente._id}')">Eliminar</button>
+          </td>
+        </tr>
+      `);
         });
-      });
+      }).fail(err => console.error('Error al cargar ingredientes:', err));
     }
 
     function guardarIngrediente() {
@@ -114,15 +114,23 @@
         nombre: $('#nombre').val(),
         cantidad_stock: $('#cantidad').val(),
         proveedor: $('#proveedor').val(),
-        fecha_vencimiento: $('#vencimiento').val()
+        fecha_vencimiento: $('#vencimiento').val() ? new Date($('#vencimiento').val()).toISOString() : null
       };
 
-      $.post(API_URL, datos)
-        .done(() => {
+      $.ajax({
+        url: API_URL,
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(datos),
+        success: function () {
           limpiarFormulario();
           cargarIngredientes();
-        })
-        .fail(err => console.error(err));
+        },
+        error: function (err) {
+          console.error('Error al guardar:', err.responseText);
+          alert('Error al guardar: ' + err.responseText);
+        }
+      });
     }
 
     function actualizarIngrediente() {
@@ -130,19 +138,23 @@
         nombre: $('#nombre').val(),
         cantidad_stock: $('#cantidad').val(),
         proveedor: $('#proveedor').val(),
-        fecha_vencimiento: $('#vencimiento').val()
+        fecha_vencimiento: $('#vencimiento').val() ? new Date($('#vencimiento').val()).toISOString() : null
       };
 
       $.ajax({
-        url: `${API_URL}/${ingredienteId}`,
-        method: 'PUT',
-        data: datos
-      })
-      .done(() => {
-        limpiarFormulario();
-        cargarIngredientes();
-      })
-      .fail(err => console.error(err));
+        url: `${API_URL}${ingredienteId}`,
+        type: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify(datos),
+        success: function () {
+          limpiarFormulario();
+          cargarIngredientes();
+        },
+        error: function (err) {
+          console.error('Error al actualizar:', err.responseText);
+          alert('Error al actualizar: ' + err.responseText);
+        }
+      });
     }
 
     function editarIngrediente(id) {
@@ -150,11 +162,11 @@
         $('#nombre').val(ingrediente.nombre);
         $('#cantidad').val(ingrediente.cantidad_stock);
         $('#proveedor').val(ingrediente.proveedor);
-        
-        const fecha = ingrediente.fecha_vencimiento ? 
+
+        const fecha = ingrediente.fecha_vencimiento ?
           new Date(ingrediente.fecha_vencimiento).toISOString().split('T')[0] : '';
         $('#vencimiento').val(fecha);
-        
+
         ingredienteId = id;
         $('#guardar').hide();
         $('#actualizar').show();
@@ -167,8 +179,8 @@
           url: `${API_URL}/${id}`,
           method: 'DELETE'
         })
-        .done(() => cargarIngredientes())
-        .fail(err => console.error(err));
+          .done(() => cargarIngredientes())
+          .fail(err => console.error(err));
       }
     }
 
@@ -184,4 +196,5 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
