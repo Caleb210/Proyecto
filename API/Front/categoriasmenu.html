@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="es">
+
 <head>
   <meta charset="utf-8" />
   <title>Categorías Menú</title>
@@ -67,8 +68,7 @@
   </div>
 
   <script>
-    const API_URL = 'http://localhost:3000/api/categorias-menu';
-    let categoriaId = null;
+    const API_URL = 'http://localhost:3000/api/categorias-menu/'; // Agregar barra al final
 
     $(document).ready(() => {
       cargarCategorias();
@@ -83,16 +83,19 @@
         $('#lista').empty();
         data.forEach(categoria => {
           $('#lista').append(`
-            <tr>
-              <td>${categoria.nombre}</td>
-              <td>${categoria.descripcion || ''}</td>
-              <td>
-                <button class="btn btn-warning btn-sm" onclick="editarCategoria('${categoria._id}')">Editar</button>
-                <button class="btn btn-danger btn-sm" onclick="eliminarCategoria('${categoria._id}')">Eliminar</button>
-              </td>
-            </tr>
-          `);
+        <tr>
+          <td>${categoria.nombre}</td>
+          <td>${categoria.descripcion || ''}</td>
+          <td>
+            <button class="btn btn-warning btn-sm" onclick="editarCategoria('${categoria._id}')">Editar</button>
+            <button class="btn btn-danger btn-sm" onclick="eliminarCategoria('${categoria._id}')">Eliminar</button>
+          </td>
+        </tr>
+      `);
         });
+      }).fail(err => {
+        console.error('Error al cargar categorías:', err);
+        alert('Error al cargar categorías: ' + err.responseText);
       });
     }
 
@@ -102,12 +105,21 @@
         descripcion: $('#descripcion').val()
       };
 
-      $.post(API_URL, datos)
-        .done(() => {
+      $.ajax({
+        url: API_URL,
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(datos),
+        success: function () {
+          alert("Categoría registrada");
           limpiarFormulario();
           cargarCategorias();
-        })
-        .fail(err => console.error(err));
+        },
+        error: function (err) {
+          console.error('Error al guardar:', err.responseText);
+          alert('Error al guardar: ' + err.responseText);
+        }
+      });
     }
 
     function actualizarCategoria() {
@@ -117,15 +129,20 @@
       };
 
       $.ajax({
-        url: `${API_URL}/${categoriaId}`,
-        method: 'PUT',
-        data: datos
-      })
-      .done(() => {
-        limpiarFormulario();
-        cargarCategorias();
-      })
-      .fail(err => console.error(err));
+        url: `${API_URL}${categoriaId}`,
+        type: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify(datos),
+        success: function () {
+          alert("Categoría actualizada");
+          limpiarFormulario();
+          cargarCategorias();
+        },
+        error: function (err) {
+          console.error('Error al actualizar:', err.responseText);
+          alert('Error al actualizar: ' + err.responseText);
+        }
+      });
     }
 
     function editarCategoria(id) {
@@ -144,8 +161,8 @@
           url: `${API_URL}/${id}`,
           method: 'DELETE'
         })
-        .done(() => cargarCategorias())
-        .fail(err => console.error(err));
+          .done(() => cargarCategorias())
+          .fail(err => console.error(err));
       }
     }
 
@@ -159,4 +176,5 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

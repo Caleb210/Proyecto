@@ -12,12 +12,25 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const categoria = new CategoriaMenu(req.body);
   try {
+    // Validar datos requeridos
+    if (!req.body.nombre) {
+      return res.status(400).json({ message: 'El nombre es requerido' });
+    }
+    
+    const categoria = new CategoriaMenu({
+      nombre: req.body.nombre,
+      descripcion: req.body.descripcion || null
+    });
+    
     const nuevaCategoria = await categoria.save();
     res.status(201).json(nuevaCategoria);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error('Error en POST /categorias-menu:', err);
+    res.status(400).json({ 
+      message: err.message,
+      errors: err.errors 
+    });
   }
 });
 
