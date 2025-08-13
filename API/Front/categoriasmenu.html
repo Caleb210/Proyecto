@@ -68,7 +68,8 @@
   </div>
 
   <script>
-    const API_URL = 'http://localhost:3000/api/categorias-menu/'; 
+    const API_URL = 'http://localhost:3000/api/categorias-menu';
+    let categoriaId = null; 
 
     $(document).ready(() => {
       cargarCategorias();
@@ -82,20 +83,22 @@
       $.get(API_URL, (data) => {
         $('#lista').empty();
         data.forEach(categoria => {
+          const id = categoria._id?.$oid || categoria._id;
           $('#lista').append(`
         <tr>
           <td>${categoria.nombre}</td>
           <td>${categoria.descripcion || ''}</td>
           <td>
-            <button class="btn btn-warning btn-sm" onclick="editarCategoria('${categoria._id}')">Editar</button>
-            <button class="btn btn-danger btn-sm" onclick="eliminarCategoria('${categoria._id}')">Eliminar</button>
+            <button class="btn btn-warning btn-sm" 
+              onclick="editarCategoria('${id}')">Editar</button>
+            <button class="btn btn-danger btn-sm" 
+              onclick="eliminarCategoria('${id}')">Eliminar</button>
           </td>
         </tr>
       `);
         });
       }).fail(err => {
         console.error('Error al cargar categorías:', err);
-        alert('Error al cargar categorías: ' + err.responseText);
       });
     }
 
@@ -129,7 +132,7 @@
       };
 
       $.ajax({
-        url: `${API_URL}${categoriaId}`,
+        url: `${API_URL}/${categoriaId}`,  
         type: 'PUT',
         contentType: 'application/json',
         data: JSON.stringify(datos),
@@ -146,12 +149,28 @@
     }
 
     function editarCategoria(id) {
-      $.get(`${API_URL}/${id}`, (categoria) => {
-        $('#nombre').val(categoria.nombre);
-        $('#descripcion').val(categoria.descripcion);
-        categoriaId = id;
-        $('#guardar').hide();
-        $('#actualizar').show();
+      const cleanedId = id.replace(/[^a-f0-9]/gi, '');
+
+      if (cleanedId.length !== 24) {
+        alert('ID inválido. Debe tener 24 caracteres hexadecimales.');
+        return;
+      }
+
+      $.ajax({
+        url: `${API_URL}/${cleanedId}`,
+        type: 'GET',
+        dataType: 'json',
+        success: function (categoria) {
+          $('#nombre').val(categoria.nombre);
+          $('#descripcion').val(categoria.descripcion || '');
+          categoriaId = cleanedId;
+          $('#guardar').hide();
+          $('#actualizar').show();
+        },
+        error: function (xhr) {
+          console.error('Error al cargar categoría:', xhr);
+          alert('Error al cargar categoría');
+        }
       });
     }
 
@@ -159,10 +178,15 @@
       if (confirm('¿Eliminar esta categoría?')) {
         $.ajax({
           url: `${API_URL}/${id}`,
-          method: 'DELETE'
-        })
-          .done(() => cargarCategorias())
-          .fail(err => console.error(err));
+          type: 'DELETE',
+          success: function () {
+            alert('Categoría eliminada');
+            cargarCategorias();
+          },
+          error: function (err) {
+            alert('Error al eliminar: ' + (err.responseJSON?.message || err.statusText));
+          }
+        });
       }
     }
 

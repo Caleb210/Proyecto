@@ -38,7 +38,7 @@ app.use('/api/detalles_pedido', RouterDetallesPedido);
 app.use('/api/mesa', RouterMesa);
 app.use('/api/categorias-menu', RouterCategorias);
 app.use('/api/platillos', RouterPlatillos);
-app.use('/api/ingredientes', RouterIngredientes);
+app.use('/api/ingredientes/', RouterIngredientes);
 
 
 app.listen(PORT, () => {

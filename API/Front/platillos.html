@@ -82,8 +82,8 @@
   </div>
 
   <script>
-    const API_URL = 'http://localhost:3000/api/platillos/'; 
-    const CATEGORIAS_URL = 'http://localhost:3000/api/categorias-menu/'; 
+    const API_URL = 'http://localhost:3000/api/platillos/';
+    const CATEGORIAS_URL = 'http://localhost:3000/api/categorias-menu/';
     let platilloId = null;
 
     $(document).ready(() => {
@@ -111,10 +111,13 @@
       $.get(API_URL, (data) => {
         $('#lista').empty();
         data.forEach(platillo => {
+          const categoriaNombre = platillo.categoria_id?.nombre ||
+            (platillo.categoria_id ? 'Cargando...' : 'Sin categoría');
+
           $('#lista').append(`
         <tr>
           <td>${platillo.nombre}</td>
-          <td>${platillo.categoria_id?.nombre || 'Sin categoría'}</td>
+          <td>${categoriaNombre}</td>
           <td>${platillo.precio}</td>
           <td>${platillo.disponible ? 'Sí' : 'No'}</td>
           <td>
@@ -183,18 +186,46 @@
     }
 
     function editarPlatillo(id) {
-      $.get(`${API_URL}${id}`, (platillo) => {
-        $('#nombre').val(platillo.nombre);
-        $('#categoria').val(platillo.categoria_id?._id || '');
-        $('#precio').val(platillo.precio);
-        $('#ingredientes').val(platillo.ingredientes?.join(', ') || '');
-        $('#disponible').prop('checked', platillo.disponible);
-        platilloId = id;
-        $('#guardar').hide();
-        $('#actualizar').show();
-      }).fail(err => {
-        console.error('Error al cargar platillo:', err);
-        alert('Error al cargar platillo: ' + err.responseText);
+      if (!id) {
+        alert('ID no proporcionado');
+        return;
+      }
+
+      // Mostrar cargando
+      $('#lista').html('<tr><td colspan="5">Cargando...</td></tr>');
+
+      $.ajax({
+        url: `${API_URL}${id}`,
+        type: 'GET',
+        dataType: 'json',
+        success: function (platillo) {
+          if (!platillo) {
+            alert('Platillo no encontrado');
+            cargarPlatillos();
+            return;
+          }
+
+          // Rellenar formulario
+          $('#nombre').val(platillo.nombre);
+          $('#categoria').val(platillo.categoria_id?._id || platillo.categoria_id || '');
+          $('#precio').val(platillo.precio);
+          $('#ingredientes').val(platillo.ingredientes?.join(', ') || '');
+          $('#disponible').prop('checked', platillo.disponible !== false);
+
+          // Cambiar botones
+          platilloId = id;
+          $('#guardar').hide();
+          $('#actualizar').show();
+        },
+        error: function (err) {
+          console.error('Error:', err);
+          let errorMsg = 'Error al cargar platillo';
+          if (err.responseJSON && err.responseJSON.message) {
+            errorMsg += ': ' + err.responseJSON.message;
+          }
+          alert(errorMsg);
+          cargarPlatillos();
+        }
       });
     }
 
