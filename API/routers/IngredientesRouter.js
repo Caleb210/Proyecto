@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    // Convertir fecha si existe
+    
     if (req.body.fecha_vencimiento) {
       req.body.fecha_vencimiento = new Date(req.body.fecha_vencimiento);
     }

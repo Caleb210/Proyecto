@@ -12,12 +12,29 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const platillo = new Platillo(req.body);
   try {
+    if (!req.body.nombre || !req.body.categoria_id || !req.body.precio) {
+      return res.status(400).json({ 
+        message: 'Nombre, categoría y precio son requeridos' 
+      });
+    }
+    
+    const platillo = new Platillo({
+      nombre: req.body.nombre,
+      categoria_id: req.body.categoria_id,
+      precio: req.body.precio,
+      ingredientes: req.body.ingredientes || [],
+      disponible: req.body.disponible !== false
+    });
+    
     const nuevoPlatillo = await platillo.save();
     res.status(201).json(nuevoPlatillo);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error('Error en POST /platillos:', err);
+    res.status(400).json({ 
+      message: err.message,
+      errors: err.errors 
+    });
   }
 });
 

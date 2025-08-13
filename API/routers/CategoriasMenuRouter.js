@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    // Validar datos requeridos
+    
     if (!req.body.nombre) {
       return res.status(400).json({ message: 'El nombre es requerido' });
     }
