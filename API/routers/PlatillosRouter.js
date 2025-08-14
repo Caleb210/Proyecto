@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const router = express.Router();
 const Platillo = require('../models/Platillos');
 
-// Obtener un platillo por ID
+
 router.get('/:id', async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -25,7 +25,7 @@ router.get('/:id', async (req, res) => {
 });
 
 
-// Obtener todos los platillos
+
 router.get('/', async (req, res) => {
   try {
     const platillos = await Platillo.find().populate('categoria_id');
@@ -35,7 +35,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Crear nuevo platillo
+
 router.post('/', async (req, res) => {
   try {
     if (!req.body.nombre || !req.body.categoria_id || !req.body.precio) {
@@ -63,7 +63,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Actualizar platillo
+
 router.put('/:id', async (req, res) => {
   try {
     const platilloActualizado = await Platillo.findByIdAndUpdate(

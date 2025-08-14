@@ -15,6 +15,9 @@
     <header>
       <ul class="nav nav-tabs">
         <li class="nav-item">
+          <a href="index.html" class="nav-link active" role="button">Inicio</a>
+        </li>
+        <li class="nav-item">
           <a href="#" class="nav-link active">Ingredientes</a>
         </li>
         <li class="nav-item dropdown">
@@ -143,7 +146,7 @@
       };
 
       $.ajax({
-        url: `${API_URL}${ingredienteId}`, 
+        url: `${API_URL}${ingredienteId}`,
         type: 'PUT',
         contentType: 'application/json',
         data: JSON.stringify(datos),
@@ -167,7 +170,7 @@
       }
 
       const url = `${API_URL}/${cleanedId}`;
-      console.log('URL de solicitud:', url); 
+      console.log('URL de solicitud:', url);
 
       $.ajax({
         url: url,

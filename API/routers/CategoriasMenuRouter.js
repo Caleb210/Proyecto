@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const router = express.Router();
 const CategoriaMenu = require('../models/CategoriasMenu');
 
-// Obtener una categoría por ID
+
 router.get('/:id', async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -21,7 +21,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Obtener todas las categorías
+
 router.get('/', async (req, res) => {
   try {
     const categorias = await CategoriaMenu.find();
@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// Crear nueva categoría
+
 router.post('/', async (req, res) => {
   try {
     if (!req.body.nombre) {
@@ -52,7 +52,7 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Actualizar categoría
+
 router.put('/:id', async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -76,7 +76,7 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// Eliminar categoría
+
 router.delete('/:id', async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
