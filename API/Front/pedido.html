@@ -13,34 +13,38 @@
 <body>
   <div class="container">
     <header>
-            <ul class="nav nav-tabs" id="navId" role="tablist">
-                <li class="nav-item">
-                    <a href="#tab1Id" class="nav-link active" data-bs-toggle="tab">Pedidos</a>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button">Módulos</a>
-                    <div class="dropdown-menu">
-                        <a class="dropdown-item" href="usuario.html">Usuarios</a>
-                        <a class="dropdown-item" href="empleado.html">Empleados</a>
-                        <a class="dropdown-item" href="cliente.html">Clientes</a>
-                        <a class="dropdown-item" href="#">Categorias Menu</a>
-                        <a class="dropdown-item" href="#">Platillos</a>
-                        <a class="dropdown-item" href="#">Ingredientes</a>
-                        <a class="dropdown-item" href="detalles_pedido.html">Detalles Pedidos</a>
-                        <a class="dropdown-item" href="mesas.html">Mesas</a>
-                        <a class="dropdown-item" href="reserva.html">Reservas</a>
-                        <a class="dropdown-item" href="proveedor.html">Proveedores</a>
-                        <a class="dropdown-item" href="venta.html">Ventas</a>
-                    </div>
-                </li>
-            </ul>
-        </header>
+      <ul class="nav nav-tabs" id="navId" role="tablist">
+        <li class="nav-item">
+          <a href="#tab1Id" class="nav-link active" data-bs-toggle="tab">Pedidos</a>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button">Módulos</a>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" href="usuario.html">Usuarios</a>
+            <a class="dropdown-item" href="empleado.html">Empleados</a>
+            <a class="dropdown-item" href="cliente.html">Clientes</a>
+            <a class="dropdown-item" href="categoriasmenu.html">Categorías Menú</a>
+            <a class="dropdown-item" href="platillos.html">Platillos</a>
+            <a class="dropdown-item" href="ingredientes.html">Ingredientes</a>
+            <a class="dropdown-item" href="detalles_pedido.html">Detalles Pedidos</a>
+            <a class="dropdown-item" href="mesas.html">Mesas</a>
+            <a class="dropdown-item" href="reserva.html">Reservas</a>
+            <a class="dropdown-item" href="proveedor.html">Proveedores</a>
+            <a class="dropdown-item" href="venta.html">Ventas</a>
+          </div>
+        </li>
+      </ul>
+    </header>
 
     <h1>Pedidos</h1>
 
     <div class="mb-3">
       <label for="cliente" class="form-label">Cliente</label>
       <input type="text" class="form-control" id="cliente" />
+    </div>
+    <div class="mb-3">
+      <label for="mesero" class="form-label">Mesero</label>
+      <input type="text" class="form-control" id="mesero" />
     </div>
     <div class="mb-3">
       <label for="fecha" class="form-label">Fecha</label>
@@ -53,6 +57,10 @@
         <option value="en_proceso">En proceso</option>
         <option value="completado">Completado</option>
       </select>
+    </div>
+    <div class="mb-3">
+      <label for="total" class="form-label">Total</label>
+      <input type="number" class="form-control" id="total" />
     </div>
 
     <div class="mb-3">
@@ -67,8 +75,10 @@
           <tr>
             <th>ID</th>
             <th>Cliente</th>
+            <th>Mesero</th>
             <th>Fecha</th>
             <th>Estado</th>
+            <th>Total</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -82,8 +92,10 @@
 
     function limpiarFormulario() {
       $("#cliente").val("");
+      $("#mesero").val("");
       $("#fecha").val("");
       $("#estado").val("pendiente");
+      $("#total").val("");
       $("#guardardatos").show();
       $("#actualizardatos").hide();
     }
@@ -94,13 +106,15 @@
         data.forEach((item) => {
           $("#listadatos").append(`
             <tr>
-              <td>${item.id}</td>
+              <td>${item._id}</td>
               <td>${item.cliente}</td>
-              <td>${item.fecha}</td>
+              <td>${item.mesero}</td>
+              <td>${item.fecha?.substring(0, 10)}</td>
               <td>${item.estado}</td>
+              <td>${item.total}</td>
               <td>
-                <a class="btn btn-primary btn-sm" onclick="editarDatos('${item.id}','${item.cliente}','${item.fecha}','${item.estado}')">Editar</a>
-                <a class="btn btn-danger btn-sm" onclick="eliminarDatos('${item.id}')">Eliminar</a>
+                <a class="btn btn-primary btn-sm" onclick="editarDatos('${item._id}','${item.cliente}','${item.mesero}','${item.fecha?.substring(0, 10)}','${item.estado}','${item.total}')">Editar</a>
+                <a class="btn btn-danger btn-sm" onclick="eliminarDatos('${item._id}')">Eliminar</a>
               </td>
             </tr>
           `);
@@ -111,8 +125,10 @@
     $("#guardardatos").click(function () {
       const nuevo = {
         cliente: $("#cliente").val(),
+        mesero: $("#mesero").val(),
         fecha: $("#fecha").val(),
-        estado: $("#estado").val()
+        estado: $("#estado").val(),
+        total: parseFloat($("#total").val())
       };
 
       $.ajax({
@@ -131,18 +147,22 @@
       });
     });
 
-    window.editarDatos = function (id, cliente, fecha, estado) {
+    window.editarDatos = function (id, cliente, mesero, fecha, estado, total) {
       $("#cliente").val(cliente);
+      $("#mesero").val(mesero);
       $("#fecha").val(fecha);
       $("#estado").val(estado);
+      $("#total").val(total);
       $("#guardardatos").hide();
       $("#actualizardatos").show();
 
       $("#actualizardatos").off().click(function () {
         const actualizado = {
           cliente: $("#cliente").val(),
+          mesero: $("#mesero").val(),
           fecha: $("#fecha").val(),
-          estado: $("#estado").val()
+          estado: $("#estado").val(),
+          total: parseFloat($("#total").val())
         };
 
         $.ajax({
@@ -180,6 +200,7 @@
 
     $(document).ready(cargarDatos);
   </script>
+
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"></script>
 </body>
