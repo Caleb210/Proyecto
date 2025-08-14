@@ -74,6 +74,7 @@
                         <th>Email</th>
                         <th>Puntos De Fidelidad</th>
                         <th>Ultima Visita</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="listadatos"></tbody>
@@ -81,121 +82,129 @@
         </div>
     </div>
     <script>
-        const API_URL = 'http://localhost:3000/api/clientes'; // Cambia la ruta si es diferente
-        let clienteEditandoId = null;
+        $(document).ready(function () {
+            const API_URL = 'http://localhost:3000/api/cliente'; // Asegúrate de que coincida con tu ruta en app.js
 
-        // Al cargar la página
-        $(document).ready(() => {
-            obtenerClientes();
-
-            $('#guardardatos').click(() => {
-                const datos = obtenerDatosFormulario();
-                if (!datos) return;
-
-                $.post(API_URL, datos)
-                    .done(() => {
-                        limpiarFormulario();
-                        obtenerClientes();
-                    })
-                    .fail(err => console.error(err));
-            });
-
-            $('#actualizardatos').click(() => {
-                const datos = obtenerDatosFormulario();
-                if (!datos) return;
-
-                $.ajax({
-                    url: `${API_URL}/${clienteEditandoId}`,
-                    method: 'PUT',
-                    data: datos
-                })
-                    .done(() => {
-                        limpiarFormulario();
-                        obtenerClientes();
-                        $('#guardardatos').show();
-                        $('#actualizardatos').hide();
-                        clienteEditandoId = null;
-                    })
-                    .fail(err => console.error(err));
-            });
-        });
-
-        // Obtener todos los clientes
-        function obtenerClientes() {
-            $.get(API_URL, (clientes) => {
-                let filas = '';
-                clientes.forEach(cliente => {
-                    filas += `
-                <tr>
-                    <td>${cliente.nombre}</td>
-                    <td>${cliente.telefono}</td>
-                    <td>${cliente.email}</td>
-                    <td>${cliente.puntos_fidelidad}</td>
-                    <td>${cliente.ultima_visita ? cliente.ultima_visita.substring(0, 10) : ''}</td>
-                    <td>
-                        <button class="btn btn-warning btn-sm" onclick="editarCliente('${cliente._id}')">Editar</button>
-                        <button class="btn btn-danger btn-sm" onclick="eliminarCliente('${cliente._id}')">Eliminar</button>
-                    </td>
-                </tr>
-            `;
-                });
-                $('#listadatos').html(filas);
-            });
-        }
-
-        // Editar cliente
-        function editarCliente(id) {
-            $.get(`${API_URL}/${id}`, (cliente) => {
-                $('#nombre').val(cliente.nombre);
-                $('#telefono').val(cliente.telefono);
-                $('#email').val(cliente.email);
-                $('#puntos_fidelidad').val(cliente.puntos_fidelidad);
-                $('#ultima_visita').val(cliente.ultima_visita ? cliente.ultima_visita.substring(0, 10) : '');
-                clienteEditandoId = id;
-                $('#guardardatos').hide();
-                $('#actualizardatos').show();
-            });
-        }
-
-        // Eliminar cliente
-        function eliminarCliente(id) {
-            if (!confirm('¿Estás seguro de eliminar este cliente?')) return;
-
-            $.ajax({
-                url: `${API_URL}/${id}`,
-                method: 'DELETE'
-            })
-                .done(() => obtenerClientes())
-                .fail(err => console.error(err));
-        }
-
-        // Obtener datos del formulario
-        function obtenerDatosFormulario() {
-            const nombre = $('#nombre').val().trim();
-            const telefono = $('#telefono').val().trim();
-            const email = $('#email').val().trim();
-            const puntos_fidelidad = $('#puntos_fidelidad').val();
-            const ultima_visita = $('#ultima_visita').val();
-
-            if (!nombre || !telefono || !email || puntos_fidelidad === '' || !ultima_visita) {
-                alert('Todos los campos son obligatorios');
-                return null;
+            // Función para limpiar el formulario
+            function limpiarFormulario() {
+                $('#nombre').val('');
+                $('#telefono').val('');
+                $('#email').val('');
+                $('#puntos_fidelidad').val('');
+                $('#ultima_visita').val('');
+                $('#guardardatos').show();
+                $('#actualizardatos').hide().data('id', '');
             }
 
-            return { nombre, telefono, email, puntos_fidelidad, ultima_visita };
-        }
+            window.limpiarFormulario = limpiarFormulario;
 
-        // Limpiar formulario
-        function limpiarFormulario() {
-            $('#nombre').val('');
-            $('#telefono').val('');
-            $('#email').val('');
-            $('#puntos_fidelidad').val('');
-            $('#ultima_visita').val('');
-            $('#guardardatos').show();
-            $('#actualizardatos').hide();
-            clienteEditandoId = null;
-        }
+            // Función para listar todos los clientes
+            function listarClientes() {
+                $.get(API_URL, function (data) {
+                    let filas = '';
+                    data.forEach(cliente => {
+                        filas += `
+                    <tr>
+                        <td>${cliente.nombre}</td>
+                        <td>${cliente.telefono}</td>
+                        <td>${cliente.email || ''}</td>
+                        <td>${cliente.puntos_fidelidad}</td>
+                        <td>${cliente.ultima_visita ? new Date(cliente.ultima_visita).toISOString().split('T')[0] : ''}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning editar" data-id="${cliente._id}">Editar</button>
+                            <button class="btn btn-sm btn-danger eliminar" data-id="${cliente._id}">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+                    });
+                    $('#listadatos').html(filas);
+                });
+            }
+
+            listarClientes();
+
+            // Guardar nuevo cliente
+            $('#guardardatos').click(function () {
+                const cliente = {
+                    nombre: $('#nombre').val(),
+                    telefono: $('#telefono').val(),
+                    email: $('#email').val(),
+                    puntos_fidelidad: $('#puntos_fidelidad').val(),
+                    ultima_visita: $('#ultima_visita').val()
+                };
+
+                $.ajax({
+                    url: API_URL,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(cliente),
+                    success: function () {
+                        limpiarFormulario();
+                        listarClientes();
+                    },
+                    error: function (err) {
+                        alert('Error al guardar cliente: ' + err.responseJSON.message);
+                    }
+                });
+            });
+
+            // Editar cliente
+            $(document).on('click', '.editar', function () {
+                const id = $(this).data('id');
+                $.get(`${API_URL}/${id}`, function (cliente) {
+                    $('#nombre').val(cliente.nombre);
+                    $('#telefono').val(cliente.telefono);
+                    $('#email').val(cliente.email);
+                    $('#puntos_fidelidad').val(cliente.puntos_fidelidad);
+                    $('#ultima_visita').val(cliente.ultima_visita ? new Date(cliente.ultima_visita).toISOString().split('T')[0] : '');
+                    $('#guardardatos').hide();
+                    $('#actualizardatos').show().data('id', id);
+                });
+            });
+
+            // Actualizar cliente
+            $('#actualizardatos').click(function () {
+                const id = $(this).data('id');
+                const cliente = {
+                    nombre: $('#nombre').val(),
+                    telefono: $('#telefono').val(),
+                    email: $('#email').val(),
+                    puntos_fidelidad: $('#puntos_fidelidad').val(),
+                    ultima_visita: $('#ultima_visita').val()
+                };
+
+                $.ajax({
+                    url: `${API_URL}/${id}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(cliente),
+                    success: function () {
+                        limpiarFormulario();
+                        listarClientes();
+                    },
+                    error: function (err) {
+                        alert('Error al actualizar cliente: ' + err.responseJSON.message);
+                    }
+                });
+            });
+
+            // Eliminar cliente
+            $(document).on('click', '.eliminar', function () {
+                if (!confirm('¿Estás seguro de eliminar este cliente?')) return;
+                const id = $(this).data('id');
+
+                $.ajax({
+                    url: `${API_URL}/${id}`,
+                    type: 'DELETE',
+                    success: function () {
+                        listarClientes();
+                    },
+                    error: function (err) {
+                        alert('Error al eliminar cliente: ' + err.responseJSON.message);
+                    }
+                });
+            });
+        });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"></script>

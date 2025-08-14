@@ -81,6 +81,7 @@
                         <th>Salario</th>
                         <th>Fecha De Contratacion</th>
                         <th>Activo</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="listadatos"></tbody>
@@ -88,122 +89,130 @@
         </div>
     </div>
     <script>
-        const API_URL = 'http://localhost:3000/api/empleados'; // Ajusta la ruta según tu backend
-        let empleadoEditandoId = null;
+        $(document).ready(function () {
+            const API_URL = 'http://localhost:3000/api/empleado'; // Asegúrate que coincida con tu ruta en app.js
 
-        $(document).ready(() => {
-            obtenerEmpleados();
-
-            $('#guardardatos').click(() => {
-                const datos = obtenerDatosFormulario();
-                if (!datos) return;
-
-                $.post(API_URL, datos)
-                    .done(() => {
-                        limpiarFormulario();
-                        obtenerEmpleados();
-                    })
-                    .fail(err => console.error(err));
-            });
-
-            $('#actualizardatos').click(() => {
-                const datos = obtenerDatosFormulario();
-                if (!datos) return;
-
-                $.ajax({
-                    url: `${API_URL}/${empleadoEditandoId}`,
-                    method: 'PUT',
-                    data: datos
-                })
-                    .done(() => {
-                        limpiarFormulario();
-                        obtenerEmpleados();
-                        $('#guardardatos').show();
-                        $('#actualizardatos').hide();
-                        empleadoEditandoId = null;
-                    })
-                    .fail(err => console.error(err));
-            });
-        });
-
-        // Listar empleados
-        function obtenerEmpleados() {
-            $.get(API_URL, (empleados) => {
-                let filas = '';
-                empleados.forEach(empleado => {
-                    filas += `
-                <tr>
-                    <td>${empleado.nombre}</td>
-                    <td>${empleado.puesto}</td>
-                    <td>${empleado.salario}</td>
-                    <td>${empleado.fecha_contratacion ? empleado.fecha_contratacion.substring(0, 10) : ''}</td>
-                    <td>${empleado.activo ? 'Sí' : 'No'}</td>
-                    <td>
-                        <button class="btn btn-warning btn-sm" onclick="editarEmpleado('${empleado._id}')">Editar</button>
-                        <button class="btn btn-danger btn-sm" onclick="eliminarEmpleado('${empleado._id}')">Eliminar</button>
-                    </td>
-                </tr>
-            `;
-                });
-                $('#listadatos').html(filas);
-            });
-        }
-
-        // Editar empleado
-        function editarEmpleado(id) {
-            $.get(`${API_URL}/${id}`, (empleado) => {
-                $('#nombre').val(empleado.nombre);
-                $('#puesto').val(empleado.puesto);
-                $('#salario').val(empleado.salario);
-                $('#fecha_contratacion').val(empleado.fecha_contratacion ? empleado.fecha_contratacion.substring(0, 10) : '');
-                $('#activo').val(empleado.activo ? 'true' : 'false');
-                empleadoEditandoId = id;
-                $('#guardardatos').hide();
-                $('#actualizardatos').show();
-            });
-        }
-
-        // Eliminar empleado
-        function eliminarEmpleado(id) {
-            if (!confirm('¿Estás seguro de eliminar este empleado?')) return;
-
-            $.ajax({
-                url: `${API_URL}/${id}`,
-                method: 'DELETE'
-            })
-                .done(() => obtenerEmpleados())
-                .fail(err => console.error(err));
-        }
-
-        // Obtener datos del formulario
-        function obtenerDatosFormulario() {
-            const nombre = $('#nombre').val().trim();
-            const puesto = $('#puesto').val();
-            const salario = $('#salario').val();
-            const fecha_contratacion = $('#fecha_contratacion').val();
-            const activo = $('#activo').val() === 'true';
-
-            if (!nombre || !puesto || salario === '' || !fecha_contratacion) {
-                alert('Todos los campos son obligatorios');
-                return null;
+            // Función para limpiar el formulario
+            function limpiarFormulario() {
+                $('#nombre').val('');
+                $('#puesto').val('mesero');
+                $('#salario').val('');
+                $('#fecha_contratacion').val('');
+                $('#activo').val('true');
+                $('#guardardatos').show();
+                $('#actualizardatos').hide().data('id', '');
             }
 
-            return { nombre, puesto, salario, fecha_contratacion, activo };
-        }
+            window.limpiarFormulario = limpiarFormulario;
 
-        // Limpiar formulario
-        function limpiarFormulario() {
-            $('#nombre').val('');
-            $('#puesto').val('administrador');
-            $('#salario').val('');
-            $('#fecha_contratacion').val('');
-            $('#activo').val('true');
-            $('#guardardatos').show();
-            $('#actualizardatos').hide();
-            empleadoEditandoId = null;
-        }
+            // Listar empleados
+            function listarEmpleados() {
+                $.get(API_URL, function (data) {
+                    let filas = '';
+                    data.forEach(empleado => {
+                        filas += `
+                    <tr>
+                        <td>${empleado.nombre}</td>
+                        <td>${empleado.puesto}</td>
+                        <td>${empleado.salario}</td>
+                        <td>${empleado.fecha_contratacion ? new Date(empleado.fecha_contratacion).toISOString().split('T')[0] : ''}</td>
+                        <td>${empleado.activo ? 'Si' : 'No'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning editar" data-id="${empleado._id}">Editar</button>
+                            <button class="btn btn-sm btn-danger eliminar" data-id="${empleado._id}">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+                    });
+                    $('#listadatos').html(filas);
+                });
+            }
+
+            listarEmpleados();
+
+            // Guardar nuevo empleado
+            $('#guardardatos').click(function () {
+                const empleado = {
+                    nombre: $('#nombre').val(),
+                    puesto: $('#puesto').val(),
+                    salario: parseFloat($('#salario').val()),
+                    fecha_contratacion: $('#fecha_contratacion').val(),
+                    activo: $('#activo').val() === 'true'
+                };
+
+                $.ajax({
+                    url: API_URL,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(empleado),
+                    success: function () {
+                        limpiarFormulario();
+                        listarEmpleados();
+                    },
+                    error: function (err) {
+                        alert('Error al guardar empleado: ' + err.responseJSON.message);
+                    }
+                });
+            });
+
+            // Editar empleado
+            $(document).on('click', '.editar', function () {
+                const id = $(this).data('id');
+                $.get(`${API_URL}/${id}`, function (empleado) {
+                    $('#nombre').val(empleado.nombre);
+                    $('#puesto').val(empleado.puesto);
+                    $('#salario').val(empleado.salario);
+                    $('#fecha_contratacion').val(empleado.fecha_contratacion ? new Date(empleado.fecha_contratacion).toISOString().split('T')[0] : '');
+                    $('#activo').val(empleado.activo ? 'true' : 'false');
+                    $('#guardardatos').hide();
+                    $('#actualizardatos').show().data('id', id);
+                });
+            });
+
+            // Actualizar empleado
+            $('#actualizardatos').click(function () {
+                const id = $(this).data('id');
+                const empleado = {
+                    nombre: $('#nombre').val(),
+                    puesto: $('#puesto').val(),
+                    salario: parseFloat($('#salario').val()),
+                    fecha_contratacion: $('#fecha_contratacion').val(),
+                    activo: $('#activo').val() === 'true'
+                };
+
+                $.ajax({
+                    url: `${API_URL}/${id}`,
+                    type: 'PUT',
+                    contentType: 'application/json',
+                    data: JSON.stringify(empleado),
+                    success: function () {
+                        limpiarFormulario();
+                        listarEmpleados();
+                    },
+                    error: function (err) {
+                        alert('Error al actualizar empleado: ' + err.responseJSON.message);
+                    }
+                });
+            });
+
+            // Eliminar empleado
+            $(document).on('click', '.eliminar', function () {
+                if (!confirm('¿Estás seguro de eliminar este empleado?')) return;
+                const id = $(this).data('id');
+
+                $.ajax({
+                    url: `${API_URL}/${id}`,
+                    type: 'DELETE',
+                    success: function () {
+                        listarEmpleados();
+                    },
+                    error: function (err) {
+                        alert('Error al eliminar empleado: ' + err.responseJSON.message);
+                    }
+                });
+            });
+        });
     </script>
-
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.min.js"></script>
 </body>
